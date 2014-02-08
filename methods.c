@@ -249,6 +249,7 @@ void create_guest_win()
     gtk_tree_view_set_activate_on_single_click(GTK_TREE_VIEW(guestview), FALSE);
     render= gtk_cell_renderer_text_new();
     g_object_set(G_OBJECT(render), "foreground", "black", NULL);
+
     column1= gtk_tree_view_column_new_with_attributes("身份证号", render, "text", GUEST_ID_COLUMN, NULL);
     column2= gtk_tree_view_column_new_with_attributes("姓名", render, "text", GUEST_NAME_COLUMN, NULL);
     column3= gtk_tree_view_column_new_with_attributes("入住时间", render, "text", GUEST_IN_TIME_COLUMN, NULL);
@@ -285,10 +286,11 @@ void create_guest_win()
 
     g_signal_connect(button2, "clicked", G_CALLBACK(handle_guest_find_focus), selection);
     g_signal_connect(button4, "clicked", G_CALLBACK(handle_guest_find_focus), selection);
-    g_signal_connect(button1, "clicked", G_CALLBACK(guest_in_dialogue), data);
-    g_signal_connect(button2, "clicked", G_CALLBACK(guest_modify_dialogue), data);
+    g_signal_connect_swapped(button1, "clicked", G_CALLBACK(guest_in_dialogue), data);
+    g_signal_connect_swapped(button2, "clicked", G_CALLBACK(guest_modify_dialogue), data);
     g_signal_connect(button3, "clicked", G_CALLBACK(guest_out_dialogue), NULL);
-    g_signal_connect(button4, "clicked", G_CALLBACK(handle_guest_delete), data);
+    g_signal_connect(button4, "clicked", G_CALLBACK(handle_guest_delete), NULL);
+    g_signal_connect(button4, "clicked", G_CALLBACK(guest_dialogue_check), data);
     g_signal_connect(guest_win, "show", G_CALLBACK(guest_dialogue_check), data);
 
 
@@ -586,23 +588,16 @@ void handle_guest_in_new(GtkWidget *ignored, struct new_guest_in_data *data)
         gtk_list_store_clear(liststore);
         access_type_data();
 
-
-        gtk_list_store_clear(GTK_LIST_STORE(roomstore));
-        access_room_data();
-
+        if (gtk_widget_is_visible(room_win))
+        {
+            gtk_list_store_clear(GTK_LIST_STORE(roomstore));
+            access_room_data();
+        }
 
         if (gtk_widget_get_visible(guest_win))
         {
-            gtk_list_store_insert_with_values(GTK_LIST_STORE(gueststore), &treeiter, 0,
-                                              GUEST_POINTER_COLUMN, room_iter->guest_,
-                                              GUEST_ID_COLUMN, id,
-                                              GUEST_NAME_COLUMN, name,
-                                              GUEST_IN_TIME_COLUMN, in_time,
-                                              GUEST_OUT_TIME_COLUMN, "在住",
-                                              GUEST_DAY_SPENT_COLUMN, 0,
-                                              GUEST_FARE_COLUMN, 0,
-                                              GUEST_PAID_COLUMN, 0,
-                                              -1);
+            gtk_list_store_clear(GTK_LIST_STORE(gueststore));
+            access_guest_data();
         }
     }
 }
@@ -985,7 +980,7 @@ void edit_new_room(GtkWidget *win)
 void edit_new_guest_in(GtkWidget *win)
 {
     if (file)
-        guest_in_dialogue();
+        guest_in_dialogue(NULL);
 }
 
 void edit_new_guest_out(GtkWidget *win)
@@ -1511,12 +1506,14 @@ void sta_by_guest()
 
 }
 
-void help_about(GtkWidget *win)
+void help_about()
 {
+    errmesg("暂无.");
 }
 
 void help_help(GtkWidget *win)
 {
+    errmesg("暂无.");
 }
 
 void access_type_data()
@@ -2071,23 +2068,23 @@ void guest_modify_dialogue(struct guest_dialogue_check *checkdata)
 
 void type_view_details()
 {
-        gtk_list_store_clear(roomstore);
-        access_room_data();
-        char title[25]= "客房类型详情:";
-        strcat(title, active_type->type_);
-        gtk_window_set_title (GTK_WINDOW (room_win), title);
-        gtk_widget_show_all(room_win);
+    gtk_list_store_clear(roomstore);
+    access_room_data();
+    char title[25]= "客房类型详情:";
+    strcat(title, active_type->type_);
+    gtk_window_set_title (GTK_WINDOW (room_win), title);
+    gtk_widget_show_all(room_win);
 
 }
 
 void room_view_detail()
 {
-        gtk_list_store_clear(gueststore);
-        access_guest_data();
-        char title[25]= "客房入住详情:";
-        strcat(title, active_room->room_number_);
-        gtk_window_set_title (GTK_WINDOW (guest_win), title);
-        gtk_widget_show_all(guest_win);
+    gtk_list_store_clear(gueststore);
+    access_guest_data();
+    char title[25]= "客房入住详情:";
+    strcat(title, active_room->room_number_);
+    gtk_window_set_title (GTK_WINDOW (guest_win), title);
+    gtk_widget_show_all(guest_win);
 }
 
 

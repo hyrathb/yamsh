@@ -51,7 +51,7 @@ void edit_new_guest_in(GtkWidget *win);
 void edit_new_guest_out(GtkWidget *win);
 
 /*to show the about dialogue*/
-void help_about(GtkWidget *win);
+void help_about();
 
 /*to show the help dialogue*/
 void help_help(GtkWidget *win);
@@ -73,7 +73,7 @@ void type_dialogue(int is_edit);
 void room_dialogue(int is_edit, struct room_dialogue_check *checkdata);
 
 /*the common guest in dialogue*/
-void guest_in_dialogue();
+void guest_in_dialogue(struct guest_dialogue_check *checkdata);
 
 /*the common guest out dialogue*/
 void guest_out_dialogue();
