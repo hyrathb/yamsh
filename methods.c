@@ -24,6 +24,7 @@ void create_main()
     GtkTreeViewColumn *column2;
     GtkTreeViewColumn *column3;
     GtkTreeViewColumn *column4;
+    GtkTreeViewColumn *column5;
     GtkWidget *type_popup_menu;
     GtkWidget *menu_item;
 
@@ -52,20 +53,22 @@ void create_main()
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, TRUE, 0);
 
 
-    /*Create the list*/
-    liststore= gtk_list_store_new(COLUMN_NUMBER, G_TYPE_POINTER, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT);
+    /*Create the tree view of types*/
+    liststore= gtk_list_store_new(COLUMN_NUMBER, G_TYPE_POINTER, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT);
     treeview= gtk_tree_view_new_with_model(GTK_TREE_MODEL(liststore));
-    gtk_tree_view_set_activate_on_single_click(GTK_TREE_VIEW(treeview), FALSE);
+    //gtk_tree_view_set_activate_on_single_click(GTK_TREE_VIEW(treeview), FALSE);
     render= gtk_cell_renderer_text_new();
     g_object_set(G_OBJECT(render), "foreground", "black", NULL);
     column1= gtk_tree_view_column_new_with_attributes("客房类型", render, "text", TYPE_COLUMN, NULL);
     column2= gtk_tree_view_column_new_with_attributes("最多容纳人数", render, "text", MOST_IN_COLUMN, NULL);
     column3= gtk_tree_view_column_new_with_attributes("总客房数", render, "text", TOTAL_COLUMN, NULL);
     column4= gtk_tree_view_column_new_with_attributes("剩余客房数", render, "text", LEFT_COLUMN, NULL);
+    column5= gtk_tree_view_column_new_with_attributes("入住数", render, "text", IN_COLUMN, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column1);
     gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column2);
     gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column3);
     gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column4);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column5);
 
     selection= gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview));
     gtk_tree_selection_set_mode(selection, GTK_SELECTION_SINGLE);
@@ -137,7 +140,7 @@ void create_room_win()
 
     roomstore= gtk_list_store_new(ROOM_COLUMN_NUMBER, G_TYPE_POINTER, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_FLOAT, G_TYPE_FLOAT, G_TYPE_STRING);
     roomview= gtk_tree_view_new_with_model(GTK_TREE_MODEL(roomstore));
-    gtk_tree_view_set_activate_on_single_click(GTK_TREE_VIEW(roomview), FALSE);
+    //gtk_tree_view_set_activate_on_single_click(GTK_TREE_VIEW(roomview), FALSE);
     render= gtk_cell_renderer_text_new();
     g_object_set(G_OBJECT(render), "foreground", "black", NULL);
     column1= gtk_tree_view_column_new_with_attributes("房间号", render, "text", ROOM_NUMBER_COLUMN, NULL);
@@ -246,7 +249,7 @@ void create_guest_win()
 
     gueststore= gtk_list_store_new(GUEST_COLUMN_NUMBER, G_TYPE_POINTER, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_FLOAT, G_TYPE_FLOAT, G_TYPE_FLOAT);
     guestview= gtk_tree_view_new_with_model(GTK_TREE_MODEL(gueststore));
-    gtk_tree_view_set_activate_on_single_click(GTK_TREE_VIEW(guestview), FALSE);
+    //gtk_tree_view_set_activate_on_single_click(GTK_TREE_VIEW(guestview), FALSE);
     render= gtk_cell_renderer_text_new();
     g_object_set(G_OBJECT(render), "foreground", "black", NULL);
 
@@ -300,7 +303,7 @@ void create_guest_win()
 }
 
 
-void (*handle[])()= {file_new, file_open, file_save, file_close, file_quit, edit_new_type, edit_new_room, edit_new_guest_in, edit_new_guest_out, query_room, query_guest, sta_by_month, sta_by_year, sta_by_guest,help_about, help_help};
+void (*handle[])()= {file_new, file_open, file_save, file_save_as, file_close, file_quit, edit_new_type, edit_new_room, edit_new_guest_in, edit_new_guest_out, query_room, query_guest, sta_by_month, sta_by_year, sta_by_guest, sta_by_room, help_about, help_help};
 
 void errmesg(const char *error)
 {
@@ -381,6 +384,7 @@ void handle_new_type(GtkWidget *ignored, struct new_type_data *data)
                                       MOST_IN_COLUMN, most_in,
                                       TOTAL_COLUMN, type_head->total_,
                                       LEFT_COLUMN, type_head->left_,
+                                      IN_COLUMN, type_head->total_-type_head->left_,
                                       -1);
     edited= 1;
 }
@@ -412,6 +416,7 @@ void handle_edit_type(GtkWidget *ignored, struct new_type_data *data)
                        MOST_IN_COLUMN, most_in,
                        TOTAL_COLUMN, active_type->total_,
                        LEFT_COLUMN, active_type->left_,
+                       IN_COLUMN, active_type->total_- active_type->left_,
                        -1);
     edited= 1;
 }
@@ -472,8 +477,9 @@ void handle_room_new(GtkWidget *ignored, struct new_room_data *data)
                        MOST_IN_COLUMN, type->most_in_,
                        TOTAL_COLUMN, type->total_,
                        LEFT_COLUMN, type->left_,
+                       IN_COLUMN, type->total_- type->left_,
                        -1);
-    if (gtk_widget_is_visible(room_win))
+    if (gtk_widget_get_visible(room_win))
     {
         gtk_list_store_clear(roomstore);
         access_room_data();
@@ -588,7 +594,7 @@ void handle_guest_in_new(GtkWidget *ignored, struct new_guest_in_data *data)
         gtk_list_store_clear(liststore);
         access_type_data();
 
-        if (gtk_widget_is_visible(room_win))
+        if (gtk_widget_get_visible(room_win))
         {
             gtk_list_store_clear(GTK_LIST_STORE(roomstore));
             access_room_data();
@@ -908,13 +914,13 @@ void file_close(GtkWidget *win)
 
 void file_new(GtkWidget *win)
 {
-    file_close(win);
     char *filename= choose_file(SAVE_FILE);
     if (filename)
     {
+        file_close(win);
         remove(filename);
-        file= fopen(filename, "w+b");
-        g_free(filename);
+        file= fopen(filename, "wb+");
+        free(filename);
         if (!file)
         {
             errmesg("Access Denied.");
@@ -925,29 +931,55 @@ void file_new(GtkWidget *win)
 
 void file_open(GtkWidget *win)
 {
-    file_close(win);
     char *filename= choose_file(OPEN_FILE);
     if (filename)
     {
-        file= fopen(filename, "r+b");
+        file_close(win);
+        file= fopen(filename, "rb+");
         if (!file)
         {
             errmesg("Access Denied.");
         }
         else
         {
-            if (!(type_head= load_data()))
-                errmesg("File Damaged.");
-            else
-                access_type_data();
+            type_head= load_data();
+            access_type_data();
         }
-        g_free(filename);
+        free(filename);
     }
 }
 
 void file_save(GtkWidget *win)
 {
     save_data();
+}
+
+void file_save_as(GtkWidget *win)
+{
+    if (!file)
+    {
+        errmesg("No File Opened.");
+        return;
+    }
+    char *filename= choose_file(SAVE_FILE_AS);
+    if (filename)
+    {
+        FILE *tfile;
+        tfile= file;
+        remove(filename);
+        file= fopen(filename, "wb+");
+        free(filename);
+        if (!file)
+        {
+            errmesg("Access Denied.");
+        }
+        else
+        {
+            save_data();
+        }
+        fclose(file);
+        file= tfile;
+    }
 }
 
 void file_quit(GtkWidget *win)
@@ -1354,10 +1386,10 @@ void sta_by_month()
 
     time_t now;
     int year;
-    char stime[30];
+    char stime[50];
     const char *p= stime;
     time(&now);
-    strftime(stime, 30, "统计时间: %Y 年%m月%d日%H时%M分%S秒", localtime(&now));
+    strftime(stime, 50, "统计时间: %Y 年%m月%d日%H时%M分%S秒", localtime(&now));
     get_num(&p, ' ');
     year=get_num(&p, ' ');
 
@@ -1506,9 +1538,68 @@ void sta_by_guest()
 
 }
 
+void sta_by_room()
+{
+    GtkWidget *sta_room_win;
+    GtkWidget *box;
+    GtkWidget *label;
+    GtkWidget *treeview;
+    GtkListStore *store;
+    GtkTreeViewColumn *column;
+    GtkCellRenderer *render;
+
+    sta_room_win= gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_container_set_border_width (GTK_CONTAINER (sta_room_win), 0);
+    gtk_window_set_position (GTK_WINDOW (sta_room_win), GTK_WIN_POS_CENTER);
+    gtk_widget_realize (sta_room_win);
+    gtk_window_set_transient_for(GTK_WINDOW(sta_room_win), GTK_WINDOW(win));
+    gtk_window_set_modal(GTK_WINDOW(sta_room_win), TRUE);
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(sta_room_win), TRUE);
+    gtk_window_set_title(GTK_WINDOW(sta_room_win), "客房统计");
+    gtk_window_resize(GTK_WINDOW(sta_room_win), 4, 2);
+
+    box= gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+    gtk_container_add(GTK_CONTAINER(sta_room_win), box);
+
+    label= gtk_label_new("客房盈利排序:");
+
+    store= gtk_list_store_new(STA_ROOM_COLUMN_NUMBER2, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_FLOAT, G_TYPE_FLOAT, G_TYPE_FLOAT);
+    treeview= gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
+    render= gtk_cell_renderer_text_new();
+    g_object_set(G_OBJECT(render), "foreground", "black", NULL);
+    column= gtk_tree_view_column_new_with_attributes("排名", render, "text", STA_ROOM_RANK_COLUMN, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column);
+    column= gtk_tree_view_column_new_with_attributes("房间号", render, "text", STA_ROOM_NUMBER_COLUMN2, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column);
+    column= gtk_tree_view_column_new_with_attributes("客房类型", render, "text", STA_ROOM_TYPE_COLUMN2, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column);
+    column= gtk_tree_view_column_new_with_attributes("应缴费用总额", render, "text", STA_ROOM_FARE_COLUMN, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column);
+    column= gtk_tree_view_column_new_with_attributes("实缴费用总额", render, "text", STA_ROOM_PAID_COLUMN, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column);
+    column= gtk_tree_view_column_new_with_attributes("折扣率", render, "text", STA_ROOM_DISCOUNT_COLUMN, NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(treeview), column);
+
+    cal_top_room(store);
+
+    gtk_box_pack_start(GTK_BOX(box), label, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(box), treeview, TRUE, TRUE, 0);
+
+    gtk_widget_show_all(sta_room_win);
+}
+
 void help_about()
 {
-    errmesg("暂无.");
+    GtkWidget *about_win;
+    about_win= gtk_about_dialog_new();
+    gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(about_win), version);
+    gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(about_win), "yamsh");
+    gtk_about_dialog_set_license_type(GTK_ABOUT_DIALOG(about_win), GTK_LICENSE_GPL_2_0);
+    gtk_about_dialog_set_website (GTK_ABOUT_DIALOG(about_win), url);
+    gtk_about_dialog_set_website_label (GTK_ABOUT_DIALOG(about_win), "github:https://github.com/hyrathb/yamsh");
+    gtk_about_dialog_set_authors (GTK_ABOUT_DIALOG(about_win), auther);
+    gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(about_win), NULL);
+    gtk_widget_show_all(about_win);
 }
 
 void help_help(GtkWidget *win)
@@ -1527,6 +1618,7 @@ void access_type_data()
                                           MOST_IN_COLUMN, type_itor->most_in_,
                                           TOTAL_COLUMN, type_itor->total_,
                                           LEFT_COLUMN, type_itor->left_,
+                                          IN_COLUMN, type_itor->total_- type_itor->left_,
                                           -1);
         type_itor= type_itor->next_;
     }
@@ -1595,9 +1687,14 @@ char *choose_file(int type)
     {
         filechooser=gtk_file_chooser_dialog_new("打开", NULL, GTK_FILE_CHOOSER_ACTION_OPEN, ("取消"), GTK_RESPONSE_CANCEL, ("确定"), GTK_RESPONSE_ACCEPT, NULL);
     }
-    else
+    else if (type== SAVE_FILE)
     {
         filechooser=gtk_file_chooser_dialog_new("新建", NULL, GTK_FILE_CHOOSER_ACTION_SAVE, ("取消"), GTK_RESPONSE_CANCEL, ("确定"), GTK_RESPONSE_ACCEPT, NULL);
+        gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(filechooser), TRUE);
+    }
+    else if (type== SAVE_FILE_AS)
+    {
+        filechooser=gtk_file_chooser_dialog_new("另存为", NULL, GTK_FILE_CHOOSER_ACTION_SAVE, ("取消"), GTK_RESPONSE_CANCEL, ("确定"), GTK_RESPONSE_ACCEPT, NULL);
         gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(filechooser), TRUE);
     }
     GtkFileFilter *filter= gtk_file_filter_new();
@@ -1606,9 +1703,11 @@ char *choose_file(int type)
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filechooser), filter);
     if (gtk_dialog_run (GTK_DIALOG (filechooser)) == GTK_RESPONSE_ACCEPT)
     {
-        char *filename;
-        filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (filechooser));
-        if (type==SAVE_FILE)
+        char *tfilename, *filename= malloc(300);
+        tfilename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (filechooser));
+        strcpy(filename, tfilename);
+        g_free(tfilename);
+        if ((type==SAVE_FILE) || (type== SAVE_FILE_AS))
         {
             int len= strlen(filename);
             if ((filename[len-5]!='.') || (filename[len-4]!='d') || (filename[len-3]!='o') || (filename[len-2]!='r') || (filename[len-1]!='d'))
@@ -1844,9 +1943,9 @@ void guest_in_dialogue(struct guest_dialogue_check *checkdata)
     label4= gtk_label_new("入住日期");
     entry4= gtk_entry_new();
     time_t now;
-    char stime[20];
+    char stime[30];
     time(&now);
-    strftime(stime, 20, "%Y/%m/%d-%H:%M", localtime(&now));
+    strftime(stime, 30, "%Y/%m/%d-%H:%M", localtime(&now));
     gtk_entry_set_text(GTK_ENTRY(entry4), stime);
 
     button1= gtk_button_new_with_label("确定");
@@ -1924,9 +2023,9 @@ void guest_out_dialogue()
     label3= gtk_label_new("退房日期");
     entry3= gtk_entry_new();
     time_t now;
-    char stime[20];
+    char stime[30];
     time(&now);
-    strftime(stime, 20, "%Y/%m/%d-%H:%M", localtime(&now));
+    strftime(stime, 30, "%Y/%m/%d-%H:%M", localtime(&now));
     gtk_entry_set_text(GTK_ENTRY(entry3), stime);
 
     label4= gtk_label_new("付款");
@@ -2179,7 +2278,12 @@ struct basic_room_type_data *load_data()
         {
             struct basic_room_type_data *loc_head, *loc_tail;
             loc_head= (struct basic_room_type_data *)malloc(sizeof(struct basic_room_type_data));
-            fread(loc_head, sizeof(struct basic_room_type_data), 1, file);
+            memset(loc_head, 0, sizeof(struct basic_room_type_data));
+            if (!fread(loc_head, sizeof(struct basic_room_type_data), 1, file))
+            {
+                free(loc_head);
+                return NULL;
+            }
             loc_tail= loc_head;
             loc_tail->total_= 0;
             loc_tail->left_=0;
@@ -2593,9 +2697,23 @@ float cal_day(const char time1[], const char time2[])
     year1= get_num(&ch1, '/');
     month1= get_num(&ch1, '/');
     day1= get_num(&ch1, '-');
-    year2= get_num(&ch2, '/');
-    month2= get_num(&ch2, '/');
-    day2= get_num(&ch2, '-');
+    if (*ch2 == 0)
+    {
+        time_t now;
+        time(&now);
+        char stime[50];
+        strftime(stime, 50, "%Y/%m/%d-%H:%M", localtime(&now));
+        ch2= stime;
+        year2= get_num(&ch2, '/');
+        month2= get_num(&ch2, '/');
+        day2= get_num(&ch2, '-');
+    }
+    else
+    {
+        year2= get_num(&ch2, '/');
+        month2= get_num(&ch2, '/');
+        day2= get_num(&ch2, '-');
+    }
 
     float result=0;
     if (year1!= year2)
@@ -2870,6 +2988,98 @@ void cal_top_10_guest(GtkListStore *store)
                                           -1);
         struct basic_guest_info *tmp =result_list;
         result_list= result_list->next_;
+        free(tmp);
+        i++;
+    }
+}
+
+void cal_room_full(struct basic_room_data *room, struct room_interest *interest)
+{
+    struct basic_guest_info *guest_iter= room->guest_;
+    interest->fare_= 0;
+    interest->paid_ =0;
+    strcpy(interest->room_number_, room->room_number_);
+    interest->room_type_= room->type_->type_;
+    while (guest_iter)
+    {
+        interest->fare_+= guest_iter->fare_;
+        interest->paid_+= guest_iter->pay_;
+        guest_iter= guest_iter->next_;
+    }
+}
+
+struct room_interest *ssort2(struct room_interest *room_list)
+{
+    if ((!room_list) || (!room_list->next_))
+        return room_list;
+    struct room_interest *tmph= (struct room_interest*) malloc(sizeof(struct room_interest)), *max, *itor, *now1, *pre1;
+    tmph->next_= room_list;
+    for (pre1=tmph, now1= room_list; now1->next_; pre1= pre1->next_, now1= pre1->next_)
+    {
+        max= pre1;
+        for (itor= pre1; itor->next_; itor= itor->next_)
+            if (itor->next_->paid_> max->next_->paid_)
+                max= itor;
+        if (now1==max)
+        {
+            struct room_interest *tmp= max->next_;
+            now1->next_= max->next_->next_;
+            tmp->next_= now1;
+            pre1->next_= tmp;
+
+        }
+        else
+        {
+            struct room_interest *tmp= max->next_->next_;
+            max->next_->next_= now1->next_;
+            now1->next_= tmp;
+            pre1->next_= max->next_;
+            max->next_= now1;
+        }
+    }
+    struct room_interest *result= tmph->next_;
+    free(tmph);
+    return result;
+}
+
+
+void cal_top_room(GtkListStore *store)
+{
+    struct room_interest *list_head= NULL;
+    struct basic_room_type_data *type_iter;
+    struct basic_room_data *room_iter;
+
+    type_iter= type_head;
+    while (type_iter)
+    {
+        room_iter= type_iter->room_head_;
+        while (room_iter)
+        {
+            struct room_interest *tmp= (struct room_interest *)malloc(sizeof(struct room_interest));
+            cal_room_full(room_iter, tmp);
+            tmp->next_= list_head;
+            list_head= tmp;
+            room_iter= room_iter->next_;
+        }
+        type_iter= type_iter->next_;
+    }
+
+    list_head= ssort2(list_head);
+
+    int i= 1;
+    while (list_head)
+    {
+        GtkTreeIter iter;
+        gtk_list_store_insert_with_values(store, &iter, -1,
+                                          STA_ROOM_RANK_COLUMN, i,
+                                          STA_ROOM_NUMBER_COLUMN2, list_head->room_number_,
+                                          STA_ROOM_TYPE_COLUMN2, list_head->room_type_,
+                                          STA_ROOM_FARE_COLUMN, list_head->fare_,
+                                          STA_ROOM_PAID_COLUMN, list_head->paid_,
+                                          STA_ROOM_DISCOUNT_COLUMN, list_head->fare_?list_head->paid_/list_head->fare_:0,
+                                          -1);
+        struct room_interest *tmp= list_head;
+        list_head= list_head->next_;
         free(tmp);
         i++;
     }
