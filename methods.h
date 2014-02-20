@@ -36,6 +36,9 @@ void file_open(GtkWidget *win);
 /*to save the current file*/
 void file_save(GtkWidget *win);
 
+/*to save the current file as another*/
+void file_save_as(GtkWidget *win);
+
 /*to close the current file*/
 void file_quit(GtkWidget *win);
 
@@ -211,6 +214,9 @@ void sta_by_year();
 
 /*a dialogue show the top 10 guests*/
 void sta_by_guest();
+
+/*a dialogue show the 10 most popular rooms*/
+void sta_by_room();
 /*****************************************************
 Query
 *****************************************************/
@@ -273,3 +279,7 @@ void cal_room_sta(GtkListStore *store, struct basic_room_data *room, int year, f
 void cal_rooms_sta(GtkListStore *store, int year);
 
 void cal_top_10_guest(GtkListStore *store);
+
+void cal_room_full(struct basic_room_data *room, struct room_interest *interest);
+
+void cal_top_room(GtkListStore *store);
