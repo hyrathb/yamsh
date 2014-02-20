@@ -33,8 +33,6 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="`pkg-config gtk+-3.0 --cflags`" />
-			<Add directory="/usr/include/gtk-3.0" />
-			<Add directory="/usr/include/gtk-3.0/gdk" />
 		</Compiler>
 		<Linker>
 			<Add option="`pkg-config gtk+-3.0 --libs`" />
