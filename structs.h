@@ -18,6 +18,14 @@ struct basic_room_data
     struct basic_room_data *next_;
 };
 
+struct room_interest
+{
+    char room_number_[6];
+    char *room_type_;
+    float fare_;
+    float paid_;
+    struct room_interest *next_;
+};
 
 struct basic_room_type_data
 {
